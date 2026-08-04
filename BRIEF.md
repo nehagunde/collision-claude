@@ -126,7 +126,7 @@ it slows down after receiving the alert, not just logs it.
 
 ---
 
-## 5. Architecture — three parts
+## 4. Architecture — three parts
 
 ### Part 1 — Road & Demand generation (Python, one-time/static)
 - Pulls NH16 Srikakulam→Vizag OSM data, runs `netconvert` → `corridor.net.xml`.
@@ -154,7 +154,7 @@ it slows down after receiving the alert, not just logs it.
 
 ---
 
-## 6. Project directory layout (proposed)
+## 5. Project directory layout (proposed)
 
 ```
 collision_claude/
@@ -195,7 +195,7 @@ collision_claude/
 
 ---
 
-## 7. Phases (work strictly in this order, pause between each)
+## 6. Phases (work strictly in this order, pause between each)
 
 Every phase must end with a **visible, verifiable output** — not just code
 that exists unseen. See §8 for the standing rule and the "Output:" line under
@@ -260,7 +260,7 @@ each phase for what that phase must show.
 
 ---
 
-## 8. Hard rules
+## 7. Hard rules
 
 - **Phase gate.** End every phase with "Phase N complete — ready for Phase
   N+1?" and stop. Do not start the next phase until the user says "go".
