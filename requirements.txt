@@ -1,0 +1,9 @@
+# Python dependencies for the NH16 collision-warning project.
+# Install inside the Kali VM: pip install -r requirements.txt
+
+traci        # SUMO's TraCI control API (talks to the running SUMO instance)
+sumolib      # SUMO network/route file parsing helpers
+pandas       # evaluation metrics (Phase 5)
+matplotlib   # comparison chart (Phase 5)
+numpy        # numeric helpers for TTC/threshold calculations
+pyproj       # required by sumolib's net.convertXY2LonLat (lat/lon conversion)
