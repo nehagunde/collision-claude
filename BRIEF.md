@@ -198,7 +198,7 @@ collision_claude/
 ## 6. Phases (work strictly in this order, pause between each)
 
 Every phase must end with a **visible, verifiable output** — not just code
-that exists unseen. See §8 for the standing rule and the "Output:" line under
+that exists unseen. See §7 for the standing rule and the "Output:" line under
 each phase for what that phase must show.
 
 - **Phase 0 — Setup & verification.** Confirm SUMO/NS-3/WAVE module on the
@@ -237,7 +237,7 @@ each phase for what that phase must show.
   **Output:** a sample log excerpt showing real beacons being sent/received
   between specific vehicle IDs (with position/speed/lane payload), proving
   the SUMO↔NS-3 bridge and V2V exchange actually work end to end.
-- **Phase 4 — TTC collision-warning logic.** Implement the rule from §4 (all
+- **Phase 4 — TTC collision-warning logic.** Implement the rule from §3 (all
   five relation types, including merge-approach for the merging vehicle
   group and wrong-way for the wrong-way vehicle group from Phase 2),
   per-vehicle-type thresholds, closed-loop slow-down response via TraCI.
@@ -268,7 +268,7 @@ each phase for what that phase must show.
   each phase must run and display real output (a log excerpt, a rendered
   image/screenshot, a printed table/chart, a console trace) proving that
   phase's work actually functions, per the "Output:" line listed under each
-  phase in §7. Never report a phase complete without showing this.
+  phase in §6. Never report a phase complete without showing this.
 - **No RSUs.** This project is pure V2V — do not introduce infrastructure
   nodes into the architecture.
 - **No live traffic API calls** for vehicle data — simulator-generated only
@@ -284,7 +284,7 @@ each phase for what that phase must show.
 
 ---
 
-## 9. Where to start
+## 8. Where to start
 
 On "go", begin **Phase 0** only:
 
@@ -295,5 +295,5 @@ On "go", begin **Phase 0** only:
    `/home/kali/collision_claude/`, to confirm).
 3. List Python libs needed (`traci`, `sumolib`, `pandas`, `matplotlib`, etc.)
    and produce `requirements.txt`.
-4. Create the directory tree from §6, with placeholder files where useful.
+4. Create the directory tree from §5, with placeholder files where useful.
 5. Stop. Ask the user to confirm Phase 0 before starting Phase 1.
