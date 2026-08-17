@@ -41,11 +41,13 @@ the closest IEEE paper to what our system actually does.
 https://ieeexplore.ieee.org/document/9739131/
 
 **"Vehicle Anti-collision Warning System Based on V2V Communication Technology"**
-IEEE Conference Publication. Compares on-board-sensor vs. V2V approaches for
-anti-collision warning on urban roads and expressways; found V2V (LTE-V2V)
-increases safe following distance during emergency braking versus sensors
-alone — a good citation for *why* V2V is the right approach (vs. e.g.
-camera-only systems) for our project.
+S. Z. Liu and S. H. Hwang. International Conference on ICT Convergence
+(ICTC), IEEE Computer Society, 2021. Verified genuine IEEE Computer
+Society conference paper (2026-08-02). Compares on-board-sensor vs. V2V
+approaches for anti-collision warning on urban roads and expressways; found
+V2V (LTE-V2V) increases safe following distance during emergency braking
+versus sensors alone — a good citation for *why* V2V is the right approach
+(vs. e.g. camera-only systems) for our project.
 https://ieeexplore.ieee.org/document/9620948/
 
 **"V2V Test Scenario-Study on Intersection Collision Warning"**
