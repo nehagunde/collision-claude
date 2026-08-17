@@ -6,6 +6,82 @@ access notes below (some are paywalled beyond the abstract).
 
 ---
 
+## E. IEEE Xplore papers specifically
+
+Added 2026-08-02, guide asked specifically about IEEE-published work. IEEE
+Xplore is the dominant venue for VANET/ITS technical research, so this
+section is naturally strong on the system-design side; India-specific
+accident-causation papers on IEEE are fewer but present.
+
+### Road accident causation, India (IEEE)
+
+**"Comprehensive Analysis of Road Accident Fatalities in India: Insights Into Demographics, Regional Variations, and Vehicle Contributions"**
+IEEE Conference Publication (very recent — high document number suggests
+2025/2026). Covers demographics, regional variation, and vehicle-type
+contribution to fatalities nationally.
+https://ieeexplore.ieee.org/document/11362688/
+
+**"Road Traffic Accident Prediction in India Using Machine Learning Algorithm Techniques"**
+IEEE Conference Publication. ML-based prediction rather than causal
+analysis, but useful if your guide wants a data-driven angle.
+https://ieeexplore.ieee.org/document/10593917/
+
+**"Indian Road Conditions and Accident Risk Predictions using Deep Learning Approach – A Review"**
+IEEE Conference Publication. A review paper — good for citing the general
+landscape of India-specific accident-risk research from an IEEE venue.
+https://ieeexplore.ieee.org/document/9316128/
+
+### V2V / VANET collision-warning systems (IEEE) — directly matches our system design
+
+**"An In-Vehicle Warning Information Provision Strategy for V2V-Based Proactive Traffic Safety Management"**
+**IEEE Journals & Magazine** (a full journal article, not just a conference
+paper — higher prestige). Uses spacing and time-to-collision measurements
+from V2V data to predict crash risk in real time — this is methodologically
+the closest IEEE paper to what our system actually does.
+https://ieeexplore.ieee.org/document/9739131/
+
+**"Vehicle Anti-collision Warning System Based on V2V Communication Technology"**
+IEEE Conference Publication. Compares on-board-sensor vs. V2V approaches for
+anti-collision warning on urban roads and expressways; found V2V (LTE-V2V)
+increases safe following distance during emergency braking versus sensors
+alone — a good citation for *why* V2V is the right approach (vs. e.g.
+camera-only systems) for our project.
+https://ieeexplore.ieee.org/document/9620948/
+
+**"V2V Test Scenario-Study on Intersection Collision Warning"**
+IEEE Conference Publication. Specifically about V2X warning at
+intersections — directly matches our **merge-approach** alert case (a
+vehicle joining the highway from a side road at a junction).
+https://ieeexplore.ieee.org/document/9448757
+
+**"Internet of Things: Vehicle collision detection and avoidance in a VANET environment"**
+IEEE Conference Publication. General VANET-based collision detection/
+avoidance system design.
+https://ieeexplore.ieee.org/document/8409861/
+
+### Wrong-way driving detection (IEEE) — matches our highest-severity alert case
+
+Note: most IEEE wrong-way-detection papers use **camera/computer-vision**
+(YOLO object detection) rather than V2V communication — a different
+technical approach than ours, but still directly useful to cite for
+*problem framing* (wrong-way driving is a recognized, actively-researched
+hazard) even though our detection method (V2V heading mismatch) differs.
+
+- **"An Automated System for Wrong-Way Vehicle Detection using YOLO and DeepSORT"** — https://ieeexplore.ieee.org/document/10465068/
+- **"A Real-Time Wrong-Way Vehicle Detection Based on YOLO and Centroid Tracking"** — https://ieeexplore.ieee.org/document/9230463/
+- **"Detection of Wrong Direction Vehicles on Two-Way Traffic"** — https://ieeexplore.ieee.org/document/9648579/
+
+### Recommended "best 3" from IEEE specifically
+
+1. **"An In-Vehicle Warning Information Provision Strategy for V2V-Based Proactive Traffic Safety Management"** — full IEEE journal article, methodologically closest to our system.
+2. **"Vehicle Anti-collision Warning System Based on V2V Communication Technology"** — grounds *why* V2V over sensor/camera-only approaches.
+3. **"V2V Test Scenario-Study on Intersection Collision Warning"** — matches our merge-approach case specifically.
+
+All of these should be fully accessible with a university IEEE Xplore
+subscription.
+
+---
+
 ## D. General highway accident causation, India (not region-specific)
 
 Added 2026-08-02 — guide clarified the causal grounding should come from
