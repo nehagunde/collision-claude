@@ -6,6 +6,63 @@ access notes below (some are paywalled beyond the abstract).
 
 ---
 
+## F. Papers similar to "Comprehensive Analysis of Road Accident Fatalities in India" (verified 2026-08-17)
+
+The user downloaded and reviewed "Comprehensive Analysis of Road Accident
+Fatalities in India" (§E) and confirmed it's a strong match for the guide's
+requirement (real government MoRTH data, ranked causes — not a system-design
+paper like the other 3 downloaded). These are similar in profile: real
+Indian accident data, causes/factors analyzed and ranked, not V2V/system
+papers.
+
+**"An analysis of causative factors for road accidents using partition around medoids and hierarchical clustering techniques"**
+Manasa et al. *Engineering Reports* (Wiley), 2024. **Best match of this
+batch** — literally titled "causative factors." Studies Tamil Nadu accident
+data with two different clustering methods (PAM and hierarchical
+clustering) across six different analysis angles. Finds head-on collisions
+account for ~31% and rear-end hits ~22% of clustered accidents; also
+identifies presence of central dividers, footpaths, careless driving, and
+two-way traffic as recurring factors. The head-on/rear-end split maps
+directly onto our wrong-way and rear-approach alert cases.
+https://onlinelibrary.wiley.com/doi/full/10.1002/eng2.12793
+
+**"Accident Factors Detection and Prediction for Indian states and district roads"**
+G. Jagadamba et al. IEEE Xplore, 2022. Focuses on Karnataka state/district
+roads; identifies season, road class, and road type as major causal
+factors — useful for the "road type" angle (NH16 is a specific road class).
+https://ieeexplore.ieee.org/document/10037644/
+
+**"A novel machine learning-based approach for analysis, prediction and prevention of accidents on indian national highways"**
+Anjali Deshpande, Vinit Tribhuvan. 2023 7th ICCUBEA, IEEE. **Directly about
+Indian national highways** — the same road category as NH16 — using
+statistical analysis and data mining on regions of vulnerability. Worth
+downloading given the direct national-highway relevance.
+(search "Deshpande Tribhuvan ICCUBEA 2023 Indian national highways accident" on IEEE Xplore to locate the document page)
+
+**"Road Accident Prediction in Highways using Machine Learning Algorithms"**
+IEEE Conference Publication. Uses curated annual government reports
+(1990–2022), broken down by month, state, vehicle type, road environment,
+traffic control, and weather — a long time-series view rather than a single
+year snapshot.
+https://ieeexplore.ieee.org/document/10722164/
+
+**Primary source, not a paper — but worth citing directly:**
+**MoRTH "Road Accidents in India 2024"** — the official government report
+itself (the same data source the paper you liked is built on). 4,87,707
+accidents, 1,77,175 fatalities in 2024; over-speeding ~70% of accidents
+nationally; ages 18–45 account for 66.1% of fatalities; men 85.8% of
+deaths. This is the primary source — citing it directly alongside the
+academic papers built on it is strong practice.
+
+### Recommended next download
+
+**"An analysis of causative factors for road accidents"** (Manasa et al.,
+Engineering Reports 2024) — closest in spirit to the one you just reviewed,
+and its head-on-vs-rear-end breakdown maps cleanly onto two of our five
+alert cases.
+
+---
+
 ## E. IEEE Xplore papers specifically
 
 Added 2026-08-02, guide asked specifically about IEEE-published work. IEEE
