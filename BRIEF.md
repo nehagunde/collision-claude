@@ -35,7 +35,7 @@ Build a working VANET collision-warning prototype that:
    highway from one side road to the opposite one — a perpendicular-path/
    T-bone risk, distinct from merging — added 2026-08-17 after comparing our
    merge case against the V2V intersection-collision-warning paper's own
-   definition, see §4), and **wrong-way** (a vehicle heading the opposite
+   definition, see §3), and **wrong-way** (a vehicle heading the opposite
    direction to its lane — see accident analysis below) cases.
 7. Alert example: `"Vehicle approaching fast from behind, please be alert."`
    Merge case example: `"Vehicle merging from side road near <junction>,
