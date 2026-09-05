@@ -267,14 +267,15 @@ each phase for what that phase must show.
   between specific vehicle IDs (with position/speed/lane payload), proving
   the SUMO↔NS-3 bridge and V2V exchange actually work end to end.
 - **Phase 4 — TTC collision-warning logic.** Implement the rule from §3 (all
-  five relation types, including merge-approach for the merging vehicle
-  group and wrong-way for the wrong-way vehicle group from Phase 2),
-  per-vehicle-type thresholds, closed-loop slow-down response via TraCI.
-  **Output:** a sample log/console trace of at least one real TTC calculation
-  and one triggered ALERT for each relation type (with the human-readable
-  message) — including at least one real merge-approach case and one
-  wrong-way case — plus a SUMO-GUI run/screenshot showing an alerted vehicle
-  visually flagged and slowing down.
+  six relation types, including merge-approach and crossing-approach for the
+  side-road vehicle group and wrong-way for the wrong-way vehicle group from
+  Phase 2), per-vehicle-type thresholds, closed-loop slow-down response via
+  TraCI.
+  **Output:** a sample log/console trace of at least one real TTC/ETA
+  calculation and one triggered ALERT for each relation type (with the
+  human-readable message) — including at least one real merge-approach, one
+  crossing-approach, and one wrong-way case — plus a SUMO-GUI run/screenshot
+  showing an alerted vehicle visually flagged and slowing down.
 - **Phase 5 — Evaluation.** Alerts-off vs alerts-on comparison runs, metrics
   (near-collision count reduction, lead-time, false-positive rate, delivery
   ratio), comparison chart.
