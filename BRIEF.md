@@ -240,9 +240,11 @@ each phase for what that phase must show.
   `netedit`/SUMO-GUI or `sumolib` plot) so the road shape can be visually
   checked against the real NH16 alignment, plus a short lane-count summary.
 - **Phase 2 — Vehicle demand.** Generate 100 vehicles' routes: ~85
-  through-traffic (highway-only, both directions) + ~15 merging (start on a
-  side road, join the highway at a real junction, continue on the highway),
-  with a realistic vehicle-type mix — car/bus/truck **plus
+  through-traffic (highway-only, both directions) + ~15 side-road vehicles
+  (start on a side road at a real junction; most merge onto the highway and
+  continue, a smaller subset cross straight over to the opposite side road —
+  added 2026-08-17 to cover both the merge-approach and crossing-approach
+  alert cases), with a realistic vehicle-type mix — car/bus/truck **plus
   motorcycles/two-wheelers** (added 2026-08-02 per the accident analysis) —
   and staggered departures. Also include a small number of **wrong-way
   vehicles** (routed onto the opposite-direction carriageway at a
