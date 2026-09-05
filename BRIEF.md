@@ -157,8 +157,9 @@ it slows down after receiving the alert, not just logs it.
 ### Part 1 — Road & Demand generation (Python, one-time/static)
 - Pulls NH16 Srikakulam→Vizag OSM data, runs `netconvert` → `corridor.net.xml`.
 - Generates 100 vehicles' routes (`.rou.xml`): ~85 through-traffic (forced
-  highway-only route, both directions) + ~15 merging (start on a side road,
-  join the highway at a real junction, continue on highway afterward) — with
+  highway-only route, both directions) + ~15 side-road vehicles (start on a
+  side road at a real junction — most merge onto the highway and continue,
+  a smaller subset cross straight over to the opposite side road) — with
   realistic speed/type mix and staggered departures.
 
 ### Part 2 — Simulation Node (SUMO + NS-3, V2V only)
