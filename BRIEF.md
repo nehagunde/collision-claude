@@ -132,19 +132,22 @@ Alert payload format (V2V beacon + alert):
 
 ```
 BEACON  { vehicle_id, position, speed, lane, heading, timestamp }
-ALERT   { target_vehicle_id, source_vehicle_id, relation (rear|front|side|merge|wrongway),
-          ttc, severity, junction_id (for merge only), timestamp }
+ALERT   { target_vehicle_id, source_vehicle_id,
+          relation (rear|front|side|merge|crossing|wrongway),
+          ttc (rear|front|side|merge), eta_diff (crossing only),
+          severity, junction_id (merge/crossing only), timestamp }
 ```
 
 (`heading` added to the beacon payload — needed for the wrong-way check.)
 
 Human-readable rendering: `"Vehicle approaching fast from behind, please be alert."`
 (with `front`/`side` variants as appropriate). Merge case: `"Vehicle merging
-from side road near <junction>, please be alert."` Wrong-way case (highest
-severity): `"Wrong-side vehicle approaching head-on near <location>, please
-be alert immediately."`
+from side road near <junction>, please be alert."` Crossing case: `"Vehicle
+crossing the highway near <junction>, please be alert."` Wrong-way case
+(highest severity): `"Wrong-side vehicle approaching head-on near
+<location>, please be alert immediately."`
 
-In all five cases, the at-risk vehicle's closed-loop response (§2) applies —
+In all six cases, the at-risk vehicle's closed-loop response (§2) applies —
 it slows down after receiving the alert, not just logs it.
 
 ---
