@@ -29,14 +29,19 @@ Build a working VANET collision-warning prototype that:
 6. On receipt, a vehicle computes **Time-To-Collision (TTC)** against
    same-lane and adjacent-lane neighbors, and raises an alert when TTC drops
    below a safety threshold — covering rear-approach, front-approach,
-   side/blind-spot, **merge-approach** (a vehicle joining the highway from a
-   side road at one of the real junctions), and **wrong-way** (a vehicle
-   heading the opposite direction to its lane — see accident analysis below)
-   cases.
+   side/blind-spot, **merge-approach** (a vehicle joining the highway and
+   continuing in its direction of travel from a side road at one of the real
+   junctions), **crossing-approach** (a vehicle crossing straight over the
+   highway from one side road to the opposite one — a perpendicular-path/
+   T-bone risk, distinct from merging — added 2026-08-17 after comparing our
+   merge case against the V2V intersection-collision-warning paper's own
+   definition, see §4), and **wrong-way** (a vehicle heading the opposite
+   direction to its lane — see accident analysis below) cases.
 7. Alert example: `"Vehicle approaching fast from behind, please be alert."`
    Merge case example: `"Vehicle merging from side road near <junction>,
-   please be alert."` Wrong-way case (highest severity): `"Wrong-side
-   vehicle approaching head-on near <location>, please be alert
+   please be alert."` Crossing case example: `"Vehicle crossing the highway
+   near <junction>, please be alert."` Wrong-way case (highest severity):
+   `"Wrong-side vehicle approaching head-on near <location>, please be alert
    immediately."`
 8. Grounded in a real accident analysis of this specific highway (guide-
    requested, completed 2026-08-02) — see
@@ -59,7 +64,7 @@ cleverness.
 | # | Decision | Value |
 |---|----------|-------|
 | Corridor | Full NH16 Srikakulam → Visakhapatnam (~100 km), real alignment from OpenStreetMap. Includes real intersecting side roads/junctions within ~400 m of the highway (not just the highway line in isolation) — decided 2026-07-30 after confirming the initial Phase 1 extraction had excluded them. |
-| Vehicle cohort | Fixed 100 vehicles, sparse over the full stretch (deliberate choice — realistic highway density over full-stretch-sparse alternative). Staggered depart times, both directions. No rolling spawn. **Split (decided 2026-08-02):** ~85 "through-traffic" vehicles travel the highway end-to-end (route forced to highway edges only, not shortest-path over the whole graph, so they can't accidentally drift onto side roads); ~15 "merging" vehicles start on a side road and join the highway at one of the real junctions from Phase 1, then continue on the highway afterward (no exiting back onto a side road — confirmed simplest behavior is sufficient). The merging group is what makes the side roads functionally meaningful, not just decorative, and is what enables the merge-approach alert case in §3. |
+| Vehicle cohort | Fixed 100 vehicles, sparse over the full stretch (deliberate choice — realistic highway density over full-stretch-sparse alternative). Staggered depart times, both directions. No rolling spawn. **Split (decided 2026-08-02, refined 2026-08-17):** ~85 "through-traffic" vehicles travel the highway end-to-end (route forced to highway edges only, not shortest-path over the whole graph, so they can't accidentally drift onto side roads); ~15 "side-road" vehicles start on a side road at one of the real junctions from Phase 1, split into two sub-behaviors — most **merge** onto the highway and continue in its direction of travel (enables the merge-approach case), a smaller subset **cross straight over** the highway to a side road on the opposite side without joining the highway flow (enables the crossing-approach/T-bone case, §4). The side-road group is what makes the side roads functionally meaningful, not just decorative. |
 | Vehicle type mix | Car/bus/truck plus **motorcycles/two-wheelers** (added 2026-08-02 after the accident analysis — real NH16 data specifically calls out two-wheelers as bearing a disproportionate share of deaths on this highway, e.g. in the Anakapalli stretch). A small number of vehicles are also configured as **wrong-way** vehicles (route onto the opposite-direction carriageway at a median-opening point), mirroring the #1 real cause of fatal accidents on this highway (see `road/docs/accident_analysis.md`). |
 | Vehicle data source | 100% simulator-generated (SUMO car-following/lane-changing models), calibrated to real NH16 speed rules (~100 km/h cars, ~80 km/h trucks/buses) and a realistic vehicle-type mix. **Not** pulled from any live traffic API — no public real-time source gives per-vehicle position/speed/lane at the granularity collision detection needs. |
 | Communication architecture | **Pure V2V, no RSUs.** Collision warning is a time-critical, short-range problem between nearby vehicles — infrastructure relay would add latency without benefit. (Contrast with the jam-detection project, which needs RSUs to bridge distance for area-wide alerts.) |
