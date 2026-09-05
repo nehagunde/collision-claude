@@ -89,7 +89,7 @@ For every beacon received from a neighbor vehicle, compute:
 TTC = distance_to_neighbor / relative_closing_speed   (undefined/∞ if not closing)
 ```
 
-Checked against five neighbor relationships:
+Checked against six neighbor relationships:
 
 - **Same lane, neighbor behind, closing** → rear-approach check
 - **Same lane, neighbor ahead, closing** → front-approach check
@@ -97,7 +97,24 @@ Checked against five neighbor relationships:
 - **Merging vehicle approaching a highway junction, closing on nearest
   highway vehicle (or vice versa)** → merge-approach check. This is the case
   that actually uses the side roads/junctions from Phase 1 — a "merging"
-  vehicle (see §2 vehicle cohort split) joining the highway from a side road.
+  vehicle (see §2 vehicle cohort split) joining the highway from a side road
+  and continuing in its direction of travel.
+- **Crossing vehicle traveling straight over the highway from one side road
+  to the opposite one** → crossing-approach check (added 2026-08-17). This
+  is a genuinely different geometry from merging: the two paths are
+  **perpendicular**, not converging along the same line, so plain 1D TTC
+  (distance ÷ closing speed) doesn't directly apply — there is no single
+  "closing speed" between two vehicles moving at an angle to each other.
+  Instead, each vehicle computes its own **ETA to the shared junction
+  point**: `ETA = distance_to_junction / current_speed`. If both vehicles'
+  ETAs fall within a short window of each other (e.g. `|ETA_highway -
+  ETA_crossing| < threshold`) while both are still approaching (not yet
+  past the junction), that's a real conflict — they would arrive at the
+  same point in space too close together in time. This is the standard
+  "time-to-intersection" style conflict check used in real intersection
+  collision-warning research (mirrors the ICW definition in the V2V
+  intersection paper: two vehicles entering the same junction from
+  perpendicular directions, one view often blocked by an obstruction).
 - **Neighbor's heading is opposite to the expected direction of its own
   lane** → wrong-way check (added 2026-08-02, see
   `road/docs/accident_analysis.md`). This is independent of distance/closing
@@ -105,10 +122,11 @@ Checked against five neighbor relationships:
   highest-severity regardless of TTC, since it's the #1 real cause of fatal
   accidents on this highway (>30% of fatalities, per the accident analysis).
 
-An **ALERT** is raised when `TTC < threshold` (wrong-way case: always, per
-above), where the threshold is per-vehicle-type (trucks/buses use a longer
-threshold than cars, reflecting real braking distance — exact values to be
-set in Phase 4 from published braking-distance references).
+An **ALERT** is raised when `TTC < threshold` for the first three cases,
+when `ETA difference < threshold` for crossing-approach, and always for
+wrong-way (per above). The threshold is per-vehicle-type (trucks/buses use a
+longer threshold than cars, reflecting real braking distance — exact values
+to be set in Phase 4 from published braking-distance references).
 
 Alert payload format (V2V beacon + alert):
 
