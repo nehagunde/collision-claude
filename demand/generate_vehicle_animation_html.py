@@ -4,18 +4,30 @@ animated HTML page — 100 vehicles moving on the real NH16 map, color-coded
 by group (through/merge/crossing/wrong-way), with play/pause and a time
 slider. Open directly in any browser, no SUMO/VM needed.
 
-Requires output/phase2_fcd.xml, produced by scripts/run_phase2_preview.sh
-with --fcd-output.geo true (so positions are already lon/lat, no sumolib
-projection conversion needed here).
+Shows ONLY the selected NH16 corridor (drawn as a highlighted route, same
+idea as the other VANET project's Gajuwaka-to-NAD view) — the map is locked
+to that corridor's own bounding box so it can never be panned/zoomed away
+to unrelated areas, and nothing outside the route is drawn.
+
+Requires:
+- output/phase2_fcd.xml, produced by scripts/run_phase2_preview.sh with
+  --fcd-output.geo true (positions already lon/lat, no reprojection needed)
+- road/nh16.net.xml, to draw the actual highway line itself (not just infer
+  the road's shape from scattered vehicle dots)
 """
 import json
 import re
 import xml.etree.ElementTree as ET
 
+import sumolib
+
+NET_FILE = "road/nh16.net.xml"
 FCD_FILE = "output/phase2_fcd.xml"
 OUT_HTML = "dashboard/vehicles_preview.html"
 
 SAMPLE_EVERY_S = 5  # coarser sampling keeps the embedded JS data manageable
+
+NH16_REF_RE = re.compile(r"NH\s*-?\s*(16|5)\b", re.IGNORECASE)
 
 GROUP_COLORS = {
     "through": "#3f7cb0",
@@ -26,6 +38,16 @@ GROUP_COLORS = {
 }
 
 
+def is_nh16(edge):
+    ref = edge.getParam("ref", "")
+    if ref and NH16_REF_RE.search(ref):
+        return True
+    if not ref:
+        etype = edge.getType() or ""
+        return "trunk" in etype or "primary" in etype
+    return False
+
+
 def group_from_id(vid):
     for prefix, group in (("through_", "through"), ("merge_", "merge"),
                            ("cross_", "crossing"), ("wrongway_", "wrongway")):
@@ -34,9 +56,32 @@ def group_from_id(vid):
     return "other"
 
 
+def load_highway_line(net):
+    """The selected NH16 route itself, as a list of [lat, lon] polylines —
+    drawn on the map so the road is visible even where no vehicle currently
+    sits, and used to define the locked view bounds (the 'only this route'
+    requirement)."""
+    lines = []
+    bounds_lats, bounds_lons = [], []
+    for edge in net.getEdges():
+        if not is_nh16(edge):
+            continue
+        latlon = []
+        for x, y in edge.getShape():
+            lon, lat = net.convertXY2LonLat(x, y)
+            latlon.append([lat, lon])
+            bounds_lats.append(lat)
+            bounds_lons.append(lon)
+        lines.append(latlon)
+    return lines, (min(bounds_lats), min(bounds_lons), max(bounds_lats), max(bounds_lons))
+
+
 def main():
+    net = sumolib.net.readNet(NET_FILE)
+    highway_lines, (min_lat, min_lon, max_lat, max_lon) = load_highway_line(net)
+    print(f"Highway polyline segments drawn: {len(highway_lines)}")
+
     frames = []  # list of {time, vehicles:[{id,type,group,lon,lat}]}
-    all_lons, all_lats = [], []
 
     context = ET.iterparse(FCD_FILE, events=("end",))
     for _, elem in context:
@@ -56,16 +101,11 @@ def main():
                 "group": group_from_id(vid),
                 "lon": lon, "lat": lat,
             })
-            all_lons.append(lon)
-            all_lats.append(lat)
         frames.append({"time": t, "vehicles": vehicles})
         elem.clear()
 
     if not frames:
         raise SystemExit("No timesteps found in FCD output — check the run succeeded.")
-
-    center_lat = sum(all_lats) / len(all_lats)
-    center_lon = sum(all_lons) / len(all_lons)
 
     print(f"Frames: {len(frames)} (sampled every {SAMPLE_EVERY_S}s)")
     print(f"Peak concurrent vehicles: {max(len(f['vehicles']) for f in frames)}")
@@ -79,7 +119,7 @@ def main():
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   html, body {{ margin: 0; height: 100%; font-family: sans-serif; }}
-  #map {{ height: calc(100% - 56px); }}
+  #map {{ height: calc(100% - 56px); background: #eef2f5; }}
   #controls {{
     height: 56px; display: flex; align-items: center; gap: 12px;
     padding: 0 16px; background: #1c1c1c; color: white; box-sizing: border-box;
@@ -114,28 +154,30 @@ def main():
 <script>
 var frames = {json.dumps(frames)};
 var groupColors = {json.dumps(GROUP_COLORS)};
+var highwayLines = {json.dumps(highway_lines)};
 
-// CartoDB's free basemap tiles started requiring an API key after Phase 1
-// was built and verified against them — an external policy change, not a
-// bug here. Esri's World Street Map tiles are free with no key required.
-var map = L.map('map');
+// The selected route's own bounding box (from the real NH16 geometry, not
+// from vehicle positions) — this is what "only the selected route" locks
+// the view to, regardless of which frame is showing.
+var routeBounds = L.latLngBounds([[{min_lat}, {min_lon}], [{max_lat}, {max_lon}]]);
+
+var map = L.map('map', {{
+    maxBounds: routeBounds.pad(0.15),
+    maxBoundsViscosity: 1.0
+}});
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
     attribution: 'Tiles &copy; Esri',
     maxZoom: 18
 }}).addTo(map);
 
-// Auto-fit to where the vehicles actually are (the NH16 corridor plus short
-// side-road stretches), instead of a fixed zoom level that shows half of
-// Andhra Pradesh regardless of how small the real corridor is.
-var allBounds = L.latLngBounds([]);
-frames.forEach(function(f) {{
-    f.vehicles.forEach(function(v) {{ allBounds.extend([v.lat, v.lon]); }});
+map.fitBounds(routeBounds, {{padding: [30, 30]}});
+map.setMinZoom(map.getZoom());  // can zoom in further, never back out past the route
+
+// Draw the selected NH16 route itself, so the road is visible even between
+// vehicles, not just implied by scattered dots.
+highwayLines.forEach(function(coords) {{
+    L.polyline(coords, {{color: '#3f7cb0', weight: 3, opacity: 0.5}}).addTo(map);
 }});
-if (allBounds.isValid()) {{
-    map.fitBounds(allBounds, {{padding: [40, 40]}});
-}} else {{
-    map.setView([{center_lat}, {center_lon}], 10);
-}}
 
 var markers = {{}};  // vehicle id -> L.circleMarker
 
