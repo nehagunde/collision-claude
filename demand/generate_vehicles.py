@@ -172,20 +172,43 @@ def find_side_road_junctions(net, nh16_edges):
     return candidates
 
 
-def build_merge_route(net, junction_id, side_edges, backbone_forward, backbone_backward):
-    """A vehicle enters from a side road and merges onto NH16, continuing in
-    whichever backbone direction actually starts at this junction."""
+def walk_highway(net, nh16_ids, start_junction_id, max_edges=20):
+    """Greedily walk forward along any NH16-tagged edges from a junction,
+    for up to max_edges steps. Deliberately does NOT depend on the single
+    precomputed backbone chain — the real NH16 network has multiple
+    NH16-tagged edges at/near most junctions (parallel carriageway
+    segments), so restricting a merge continuation to only the one
+    shortest-path chain was too fragile (it's what caused 0/10 merge
+    vehicles to build on the first real run)."""
+    route = []
+    current = start_junction_id
+    visited = set()
+    for _ in range(max_edges):
+        node = net.getNode(current)
+        next_edge = None
+        for edge in node.getOutgoing():
+            if edge.getID() in nh16_ids and edge.getID() not in visited:
+                next_edge = edge
+                break
+        if next_edge is None:
+            break
+        route.append(next_edge.getID())
+        visited.add(next_edge.getID())
+        current = next_edge.getToNode().getID()
+    return route
+
+
+def build_merge_route(net, junction_id, side_edges, nh16_ids):
+    """A vehicle enters from a side road and merges onto NH16, continuing
+    along whichever NH16 edges actually lead out of this exact junction."""
     incoming = [e for e in side_edges if e.getToNode().getID() == junction_id]
     if not incoming:
         return None
     entry_edge = random.choice(incoming)
-
-    for backbone in (backbone_forward, backbone_backward):
-        for i, eid in enumerate(backbone):
-            if net.getEdge(eid).getFromNode().getID() == junction_id:
-                remaining = backbone[i:i + 20]  # cap route length for a short demo segment
-                return [entry_edge.getID()] + remaining
-    return None
+    continuation = walk_highway(net, nh16_ids, junction_id)
+    if not continuation:
+        return None
+    return [entry_edge.getID()] + continuation
 
 
 def build_crossing_route(net, junction_id, side_edges):
