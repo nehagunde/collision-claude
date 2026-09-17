@@ -90,14 +90,14 @@ def main():
 </div>
 <script>
 var map = L.map('map').setView([{center_lat}, {center_lon}], 10);
-// Using CartoDB's basemap tiles instead of the raw OSM tile server: OSM's
-// own tile.openstreetmap.org enforces a Referer-header policy that blocks
-// requests from a locally-opened file:// page (no Referer is sent), which
-// is exactly how this file is meant to be viewed.
-L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 18,
-    subdomains: 'abcd'
+// OSM's own tile.openstreetmap.org enforces a Referer-header policy that
+// blocks requests from a locally-opened file:// page (no Referer is sent).
+// CartoDB's free tiles were used to work around that, but CartoDB has since
+// started requiring an API key even for anonymous/low-volume use — so this
+// uses Esri's World Street Map tiles instead, which are free with no key.
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 18
 }}).addTo(map);
 
 var sideRoads = {json.dumps(side_lines)};

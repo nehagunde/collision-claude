@@ -115,12 +115,27 @@ def main():
 var frames = {json.dumps(frames)};
 var groupColors = {json.dumps(GROUP_COLORS)};
 
-var map = L.map('map').setView([{center_lat}, {center_lon}], 10);
-L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    maxZoom: 18,
-    subdomains: 'abcd'
+// CartoDB's free basemap tiles started requiring an API key after Phase 1
+// was built and verified against them — an external policy change, not a
+// bug here. Esri's World Street Map tiles are free with no key required.
+var map = L.map('map');
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{{z}}/{{y}}/{{x}}', {{
+    attribution: 'Tiles &copy; Esri',
+    maxZoom: 18
 }}).addTo(map);
+
+// Auto-fit to where the vehicles actually are (the NH16 corridor plus short
+// side-road stretches), instead of a fixed zoom level that shows half of
+// Andhra Pradesh regardless of how small the real corridor is.
+var allBounds = L.latLngBounds([]);
+frames.forEach(function(f) {{
+    f.vehicles.forEach(function(v) {{ allBounds.extend([v.lat, v.lon]); }});
+}});
+if (allBounds.isValid()) {{
+    map.fitBounds(allBounds, {{padding: [40, 40]}});
+}} else {{
+    map.setView([{center_lat}, {center_lon}], 10);
+}}
 
 var markers = {{}};  // vehicle id -> L.circleMarker
 
