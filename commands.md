@@ -86,6 +86,35 @@ verified against the real highway shape.
 
 ---
 
-## Phase 2 — (not started yet)
+## Phase 2 — Vehicle demand (100 vehicles, all 5 accident causes)
 
-*(commands will be added here once Phase 2 is built)*
+```bash
+cd ~/collision_claude
+chmod +x scripts/*.sh
+bash scripts/build_demand.sh
+```
+
+This one command runs all of:
+- `demand/generate_vehicles.py` — builds `sim/sumo/routes.rou.xml`: ~85
+  through-traffic (highway-only, both directions), ~10 merging + ~5
+  crossing side-road vehicles at real junctions, a subset of through-traffic
+  re-routed onto oncoming lanes for wrong-way driving, realistic
+  car/motorcycle/truck/bus mix
+- `demand/vehicle_summary.py` — printed table + `demand/vehicle_distribution.png`
+  (type and reference-speed histograms)
+- `scripts/run_phase2_preview.sh` — plain headless `sumo` run (no NS-3 yet),
+  records `output/phase2_fcd.xml`
+- `demand/generate_vehicle_animation_html.py` — animated map,
+  `dashboard/vehicles_preview.html` (100 vehicles moving on the real NH16
+  map, color-coded by group, play/pause + time slider)
+
+**View the animated preview** (works in any browser, no SUMO needed):
+```bash
+firefox ~/collision_claude/dashboard/vehicles_preview.html
+```
+
+**Note printed by the script if it happens:** it may report building fewer
+merge/crossing/wrong-way vehicles than requested if the real NH16 network
+doesn't have enough suitable junctions/divided-carriageway stretches — it
+tops up the difference with extra through-traffic and prints exactly what
+it built, so the real count is always visible, not silently wrong.
