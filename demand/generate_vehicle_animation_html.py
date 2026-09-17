@@ -248,15 +248,22 @@ def main():
     for jid, j in junctions.items():
         color = GROUP_COLORS[j["group"]]
         for eid, s in j["stubs"].items():
+            mx = (s["a"][0] + s["b"][0]) / 2
+            my = (s["a"][1] + s["b"][1]) / 2
             stub_svg += (f'<line x1="{s["a"][0]:.1f}" y1="{s["a"][1]:.1f}" '
                          f'x2="{s["b"][0]:.1f}" y2="{s["b"][1]:.1f}" '
                          f'stroke="{color}" stroke-width="6" stroke-linecap="round" '
-                         f'opacity="0.55"/>\n')
+                         f'opacity="0.6"/>\n'
+                         f'<circle cx="{s["a"][0]:.1f}" cy="{s["a"][1]:.1f}" r="3" '
+                         f'fill="{color}"/>\n'
+                         f'<text class="stub-label" x="{mx:.1f}" y="{my:.1f}" '
+                         f'transform="rotate({-25 if j["side"] < 0 else 25} {mx:.1f} {my:.1f})">'
+                         f'SIDE ROAD</text>\n')
         stub_svg += (f'<rect x="{j["x"]-5}" y="{j["y"]-5}" width="10" height="10" '
                      f'fill="{color}" stroke="#0f1620" stroke-width="1.5"/>\n'
                      f'<text class="junction-label" x="{j["x"]+9}" '
                      f'y="{j["y"] + (22 if j["side"] > 0 else -14)}">'
-                     f'~{j["km"]}km &middot; {GROUP_LABELS[j["group"]]}</text>\n')
+                     f'&#9670; JUNCTION ~{j["km"]}km &middot; {GROUP_LABELS[j["group"]]}</text>\n')
 
     html = f"""<!doctype html>
 <html>
@@ -281,6 +288,7 @@ def main():
   }}
   #canvasWrap svg {{ display: block; }}
   .junction-label {{ fill: #c7d3de; font-size: 12px; font-weight: 500; }}
+  .stub-label {{ fill: #c7d3de; font-size: 10px; font-style: italic; letter-spacing: 0.04em; }}
   .end-label {{ fill: #8fa3b8; font-size: 14px; font-weight: 600; }}
   #sidebar {{
     width: 270px; background: #131c28; border-left: 1px solid #22303f;
@@ -303,6 +311,16 @@ def main():
   .legend-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
   .legend-line {{ width: 16px; height: 3px; }}
   #hint {{ font-size: 11px; color: #6b7f92; margin-top: 4px; }}
+  .cause-row {{
+    background: #1a2531; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px;
+  }}
+  .cause-row .name {{ font-size: 12px; font-weight: 600; margin-bottom: 2px; }}
+  .cause-row .desc {{ font-size: 10.5px; color: #8fa3b8; margin-bottom: 6px; }}
+  .locate-btn {{
+    cursor: pointer; font-size: 11px; padding: 4px 10px; border-radius: 4px;
+    border: 1px solid #3f7cb0; background: transparent; color: #6fb3e0; margin-right: 6px;
+  }}
+  .locate-btn:hover {{ background: #3f7cb0; color: white; }}
   #controls {{
     height: 60px; background: #131c28; border-top: 1px solid #22303f;
     display: flex; align-items: center; gap: 14px; padding: 0 20px; flex-shrink: 0;
