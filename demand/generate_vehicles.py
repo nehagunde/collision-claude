@@ -280,6 +280,8 @@ def main():
         print("No NH16 edges found — check road/nh16.net.xml", file=sys.stderr)
         sys.exit(1)
 
+    nh16_ids = {e.getID() for e in nh16_edges}
+
     forward, backward, north_node, south_node = find_backbone(net, nh16_edges)
     print(f"Backbone: {len(forward)} edges Srikakulam->Vizag, "
           f"{len(backward)} edges Vizag->Srikakulam")
@@ -298,13 +300,15 @@ def main():
         depart = round(random.uniform(0, SIM_DURATION * 0.8), 1)
         group = "through"
         route = direction
+        vid = f"through_{i}"
         if n_wrongway_built < N_WRONG_WAY:
             wrong_route = build_wrong_way_route(net, direction)
             if wrong_route:
                 route = wrong_route
                 group = "wrongway"
+                vid = f"wrongway_{n_wrongway_built}"
                 n_wrongway_built += 1
-        vehicles.append((f"through_{i}", vtype, depart, route, group))
+        vehicles.append((vid, vtype, depart, route, group))
 
     if n_wrongway_built < N_WRONG_WAY:
         print(f"NOTE: only built {n_wrongway_built}/{N_WRONG_WAY} wrong-way "
@@ -316,7 +320,7 @@ def main():
     for node_id, side_edges in junctions:
         if n_merge_built >= N_MERGING:
             break
-        route = build_merge_route(net, node_id, side_edges, forward, backward)
+        route = build_merge_route(net, node_id, side_edges, nh16_ids)
         if route:
             vtype = pick_vtype()
             depart = round(random.uniform(0, SIM_DURATION * 0.8), 1)
