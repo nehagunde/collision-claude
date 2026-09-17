@@ -97,40 +97,48 @@ def shortest_path_restricted(net, allowed_edge_ids, start_node_id, end_node_id):
 
 
 def find_backbone(net, nh16_edges):
-    """Find the two geographic extremes of the NH16 subgraph (by latitude)
-    and the directed edge-path between them in each direction."""
+    """Find the directed edge-path spanning NH16 in each direction, anchored
+    on real EDGES (never bare nodes) so a genuine dead-end node — one with
+    zero outgoing or incoming edges, which does exist at the literal tip of
+    a divided highway — can never crash the lookup."""
     nh16_ids = {e.getID() for e in nh16_edges}
-    node_lat = {}
-    for e in nh16_edges:
-        for node in (e.getFromNode(), e.getToNode()):
-            if node.getID() not in node_lat:
-                x, y = node.getCoord()
-                lon, lat = net.convertXY2LonLat(x, y)
-                node_lat[node.getID()] = lat
 
-    north_node = max(node_lat, key=node_lat.get)   # Srikakulam end
-    south_node = min(node_lat, key=node_lat.get)   # Visakhapatnam end
+    def lat_of(node):
+        x, y = node.getCoord()
+        _, lat = net.convertXY2LonLat(x, y)
+        return lat
 
-    forward = shortest_path_restricted(net, nh16_ids, north_node, south_node)
-    backward = shortest_path_restricted(net, nh16_ids, south_node, north_node)
+    # Forward (Srikakulam -> Vizag): start from whichever NH16 edge begins
+    # furthest north, end at whichever NH16 edge finishes furthest south.
+    fwd_start_edge = max(nh16_edges, key=lambda e: lat_of(e.getFromNode()))
+    fwd_end_edge = min(nh16_edges, key=lambda e: lat_of(e.getToNode()))
 
-    if forward is None or backward is None:
-        print("WARNING: NH16 subgraph is not fully connected end-to-end; "
-              "falling back to sumolib's unrestricted shortest path for "
-              "whichever direction failed (may briefly use a non-NH16 edge).",
-              file=sys.stderr)
-        if forward is None:
-            _, edges = net.getShortestPath(
-                net.getNode(north_node).getOutgoing()[0],
-                net.getNode(south_node).getIncoming()[0])
-            forward = [e.getID() for e in edges] if edges else []
-        if backward is None:
-            _, edges = net.getShortestPath(
-                net.getNode(south_node).getOutgoing()[0],
-                net.getNode(north_node).getIncoming()[0])
-            backward = [e.getID() for e in edges] if edges else []
+    # Backward (Vizag -> Srikakulam): the mirror image, using edges that
+    # actually run the opposite direction (a divided highway keeps separate
+    # edges per direction, so this is not just fwd reversed).
+    bwd_start_edge = min(nh16_edges, key=lambda e: lat_of(e.getFromNode()))
+    bwd_end_edge = max(nh16_edges, key=lambda e: lat_of(e.getToNode()))
 
-    return forward, backward, north_node, south_node
+    forward = shortest_path_restricted(
+        net, nh16_ids, fwd_start_edge.getFromNode().getID(), fwd_end_edge.getToNode().getID())
+    backward = shortest_path_restricted(
+        net, nh16_ids, bwd_start_edge.getFromNode().getID(), bwd_end_edge.getToNode().getID())
+
+    if forward is None:
+        print("WARNING: NH16 subgraph not fully connected forward; falling "
+              "back to sumolib's unrestricted shortest path (may briefly "
+              "use a non-NH16 edge).", file=sys.stderr)
+        edges, _cost = net.getShortestPath(fwd_start_edge, fwd_end_edge)
+        forward = [e.getID() for e in edges] if edges else [fwd_start_edge.getID()]
+
+    if backward is None:
+        print("WARNING: NH16 subgraph not fully connected backward; falling "
+              "back to sumolib's unrestricted shortest path (may briefly "
+              "use a non-NH16 edge).", file=sys.stderr)
+        edges, _cost = net.getShortestPath(bwd_start_edge, bwd_end_edge)
+        backward = [e.getID() for e in edges] if edges else [bwd_start_edge.getID()]
+
+    return forward, backward, fwd_start_edge.getFromNode().getID(), fwd_end_edge.getToNode().getID()
 
 
 def find_opposite_edge(net, edge):
