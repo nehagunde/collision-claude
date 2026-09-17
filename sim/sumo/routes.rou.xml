@@ -3,7 +3,7 @@
     <vType id="motorcycle" vClass="motorcycle" length="2.2" maxSpeed="25.0" accel="3.5" decel="5.0" sigma="0.5"/>
     <vType id="truck" vClass="truck" length="10.0" maxSpeed="22.2" accel="1.3" decel="3.5" sigma="0.5"/>
     <vType id="bus" vClass="bus" length="12.0" maxSpeed="22.2" accel="1.2" decel="3.5" sigma="0.5"/>
-    <vehicle id="through_0" type="car" depart="9.3" departLane="best" departSpeed="max">
+    <vehicle id="wrongway_0" type="car" depart="9.3" departLane="best" departSpeed="max">
         <route edges="1487539832"/>
     </vehicle>
     <vehicle id="through_15" type="car" depart="20.7" departLane="best" departSpeed="max">
@@ -12,11 +12,8 @@
     <vehicle id="through_46" type="bus" depart="26.8" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
-    <vehicle id="through_4" type="motorcycle" depart="56.1" departLane="best" departSpeed="max">
+    <vehicle id="wrongway_2" type="motorcycle" depart="56.1" departLane="best" departSpeed="max">
         <route edges="1487539832"/>
-    </vehicle>
-    <vehicle id="through_extra_4" type="car" depart="83.6" departLane="best" departSpeed="max">
-        <route edges="-1487539832"/>
     </vehicle>
     <vehicle id="through_81" type="bus" depart="110.2" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -41,6 +38,9 @@
     </vehicle>
     <vehicle id="through_39" type="car" depart="197.3" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
+    </vehicle>
+    <vehicle id="merge_1" type="car" depart="201.5" departLane="best" departSpeed="max">
+        <route edges="1340073064#0-AddedOffRampEdge 1546670696#0 1546670696#1 1340833110"/>
     </vehicle>
     <vehicle id="through_17" type="truck" depart="204.1" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -75,17 +75,14 @@
     <vehicle id="through_80" type="car" depart="514.3" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="through_extra_9" type="car" depart="523.4" departLane="best" departSpeed="max">
-        <route edges="-1487539832"/>
-    </vehicle>
     <vehicle id="through_20" type="car" depart="548.4" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
     <vehicle id="through_56" type="motorcycle" depart="586.4" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="cross_1" type="car" depart="595.7" departLane="best" departSpeed="max">
-        <route edges="1340073064#0-AddedOffRampEdge 1340073064#1"/>
+    <vehicle id="merge_7" type="car" depart="605.3" departLane="best" departSpeed="max">
+        <route edges="-398509959 1027304310 -1027304310"/>
     </vehicle>
     <vehicle id="through_18" type="car" depart="617.0" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -102,7 +99,7 @@
     <vehicle id="through_44" type="car" depart="687.4" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="through_5" type="truck" depart="689.6" departLane="best" departSpeed="max">
+    <vehicle id="wrongway_3" type="truck" depart="689.6" departLane="best" departSpeed="max">
         <route edges="1487539832"/>
     </vehicle>
     <vehicle id="through_19" type="car" depart="699.8" departLane="best" departSpeed="max">
@@ -125,6 +122,21 @@
     </vehicle>
     <vehicle id="through_55" type="motorcycle" depart="784.4" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
+    </vehicle>
+    <vehicle id="cross_1" type="motorcycle" depart="817.3" departLane="best" departSpeed="max">
+        <route edges="1340073064#0-AddedOffRampEdge 1340073064#1"/>
+    </vehicle>
+    <vehicle id="merge_3" type="motorcycle" depart="864.9" departLane="best" departSpeed="max">
+        <route edges="1243542315#1-AddedOffRampEdge 1191649216 1191649212#1-AddedOnRampEdge 1191649212#1 218683616#1-AddedOnRampEdge 218683616#1 218683616#2-AddedOnRampEdge 218683616#2 218683616#2-AddedOffRampEdge 1513577145#1 1513577141#1-AddedOnRampEdge 1513577141#1 1513577135#1 218683613#1-AddedOnRampEdge 218683613#1 218683613#1-AddedOffRampEdge 218683613#3 218683613#4 218683613#5 218683613#6 218683613#7-AddedOnRampEdge"/>
+    </vehicle>
+    <vehicle id="merge_6" type="motorcycle" depart="866.7" departLane="best" departSpeed="max">
+        <route edges="218680821#0-AddedOffRampEdge 877458365"/>
+    </vehicle>
+    <vehicle id="cross_4" type="car" depart="894.0" departLane="best" departSpeed="max">
+        <route edges="218680822#3 218680822#4-AddedOnRampEdge"/>
+    </vehicle>
+    <vehicle id="merge_4" type="motorcycle" depart="939.4" departLane="best" departSpeed="max">
+        <route edges="1087125241 1263600515#0 1263600515#1"/>
     </vehicle>
     <vehicle id="through_77" type="motorcycle" depart="945.4" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -165,11 +177,11 @@
     <vehicle id="through_50" type="car" depart="1262.0" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
+    <vehicle id="merge_8" type="car" depart="1273.4" departLane="best" departSpeed="max">
+        <route edges="1191649255#1 1201729350#1-AddedOnRampEdge 1201729350#1"/>
+    </vehicle>
     <vehicle id="through_45" type="car" depart="1316.8" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
-    </vehicle>
-    <vehicle id="through_extra_3" type="motorcycle" depart="1406.1" departLane="best" departSpeed="max">
-        <route edges="1201729348#0"/>
     </vehicle>
     <vehicle id="through_57" type="motorcycle" depart="1455.6" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -177,14 +189,8 @@
     <vehicle id="through_1" type="bus" depart="1462.1" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
-    <vehicle id="through_extra_2" type="bus" depart="1550.1" departLane="best" departSpeed="max">
-        <route edges="-1487539832"/>
-    </vehicle>
     <vehicle id="through_3" type="car" depart="1553.4" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
-    </vehicle>
-    <vehicle id="cross_0" type="car" depart="1562.7" departLane="best" departSpeed="max">
-        <route edges="877479402#0 877479402#1"/>
     </vehicle>
     <vehicle id="through_63" type="bus" depart="1571.3" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
@@ -201,17 +207,17 @@
     <vehicle id="through_14" type="car" depart="1694.3" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
-    <vehicle id="through_extra_7" type="car" depart="1704.7" departLane="best" departSpeed="max">
-        <route edges="-1487539832"/>
-    </vehicle>
     <vehicle id="through_51" type="car" depart="1761.6" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
+    </vehicle>
+    <vehicle id="cross_2" type="motorcycle" depart="1783.5" departLane="best" departSpeed="max">
+        <route edges="1243542315#1-AddedOffRampEdge 1243542315#2"/>
     </vehicle>
     <vehicle id="through_60" type="car" depart="1834.9" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
-    <vehicle id="through_extra_8" type="motorcycle" depart="1851.1" departLane="best" departSpeed="max">
-        <route edges="1201729348#0"/>
+    <vehicle id="merge_2" type="motorcycle" depart="1910.6" departLane="best" departSpeed="max">
+        <route edges="1513577149 218683616#1-AddedOnRampEdge 218683616#1 218683616#2-AddedOnRampEdge 218683616#2 218683616#2-AddedOffRampEdge 1513577145#1 1513577141#1-AddedOnRampEdge 1513577141#1 1513577135#1 218683613#1-AddedOnRampEdge 218683613#1 218683613#1-AddedOffRampEdge 218683613#3 218683613#4 218683613#5 218683613#6 218683613#7-AddedOnRampEdge 218683613#7 218683613#7-AddedOffRampEdge 218683613#8"/>
     </vehicle>
     <vehicle id="through_67" type="car" depart="1920.8" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
@@ -222,32 +228,26 @@
     <vehicle id="through_22" type="car" depart="1939.3" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
-    <vehicle id="cross_3" type="motorcycle" depart="2003.1" departLane="best" departSpeed="max">
-        <route edges="1087125241 1087125245"/>
-    </vehicle>
     <vehicle id="through_11" type="bus" depart="2053.3" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
-    </vehicle>
-    <vehicle id="through_extra_5" type="car" depart="2085.6" departLane="best" departSpeed="max">
-        <route edges="-1487539832"/>
     </vehicle>
     <vehicle id="through_82" type="motorcycle" depart="2098.2" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="cross_4" type="truck" depart="2204.9" departLane="best" departSpeed="max">
-        <route edges="218680822#3 218680822#4-AddedOnRampEdge"/>
+    <vehicle id="cross_0" type="bus" depart="2119.6" departLane="best" departSpeed="max">
+        <route edges="877479402#0 877479402#1"/>
     </vehicle>
     <vehicle id="through_71" type="car" depart="2253.3" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
+    <vehicle id="merge_9" type="car" depart="2286.0" departLane="best" departSpeed="max">
+        <route edges="1192488528#0-AddedOffRampEdge 1546670701 1340833110"/>
+    </vehicle>
     <vehicle id="through_27" type="bus" depart="2327.1" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="through_2" type="truck" depart="2424.0" departLane="best" departSpeed="max">
+    <vehicle id="wrongway_1" type="truck" depart="2424.0" departLane="best" departSpeed="max">
         <route edges="1487539832"/>
-    </vehicle>
-    <vehicle id="through_extra_1" type="car" depart="2457.9" departLane="best" departSpeed="max">
-        <route edges="-1487539832"/>
     </vehicle>
     <vehicle id="through_69" type="motorcycle" depart="2490.1" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
@@ -270,8 +270,8 @@
     <vehicle id="through_65" type="car" depart="2589.1" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="cross_2" type="car" depart="2605.9" departLane="best" departSpeed="max">
-        <route edges="1243542315#1-AddedOffRampEdge 1243542315#2"/>
+    <vehicle id="merge_0" type="car" depart="2665.7" departLane="best" departSpeed="max">
+        <route edges="877479402#0 879777946#1 1410037691#2-AddedOnRampEdge 1410037691#2 1191649212#1-AddedOnRampEdge 1191649212#1 218683616#1-AddedOnRampEdge 218683616#1 218683616#2-AddedOnRampEdge 218683616#2 218683616#2-AddedOffRampEdge 1513577145#1 1513577141#1-AddedOnRampEdge 1513577141#1 1513577135#1 218683613#1-AddedOnRampEdge 218683613#1 218683613#1-AddedOffRampEdge 218683613#3 218683613#4 218683613#5"/>
     </vehicle>
     <vehicle id="through_33" type="bus" depart="2668.4" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -285,8 +285,11 @@
     <vehicle id="through_79" type="car" depart="2705.0" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
     </vehicle>
-    <vehicle id="through_extra_0" type="car" depart="2715.1" departLane="best" departSpeed="max">
-        <route edges="1201729348#0"/>
+    <vehicle id="merge_5" type="car" depart="2708.2" departLane="best" departSpeed="max">
+        <route edges="642699273 218701482#3-AddedOnRampEdge 218701482#3 218701482#3-AddedOffRampEdge 218701482#5 1518385811#1-AddedOnRampEdge 1518385811#1 1518385811#1-AddedOffRampEdge 1518385811#2 1243540164#1-AddedOnRampEdge 1243540164#1 1243540164#1-AddedOffRampEdge 1243540164#2 1513577137#1-AddedOnRampEdge 1513577137#1 1513577139#1 1513577147#1-AddedOnRampEdge 1513577147#1 1513577147#1-AddedOffRampEdge 1189064158#1 1189064158#2"/>
+    </vehicle>
+    <vehicle id="cross_3" type="car" depart="2741.8" departLane="best" departSpeed="max">
+        <route edges="1087125241 1087125245"/>
     </vehicle>
     <vehicle id="through_10" type="truck" depart="2777.4" departLane="best" departSpeed="max">
         <route edges="-1487539832"/>
@@ -298,9 +301,6 @@
         <route edges="-1487539832"/>
     </vehicle>
     <vehicle id="through_7" type="car" depart="2816.6" departLane="best" departSpeed="max">
-        <route edges="1201729348#0"/>
-    </vehicle>
-    <vehicle id="through_extra_6" type="truck" depart="2824.5" departLane="best" departSpeed="max">
         <route edges="1201729348#0"/>
     </vehicle>
 </routes>
