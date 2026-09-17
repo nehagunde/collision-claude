@@ -354,6 +354,34 @@ def main():
     </div>
     <div id="sidebar">
       <div class="panel">
+        <h3>5 accident causes &mdash; jump to a live example</h3>
+        <div class="cause-row">
+          <div class="name">1. Over-speeding</div>
+          <div class="desc">Rear/front TTC checks target this (logic added in Phase 4). Jumps to whichever vehicle is fastest right now.</div>
+          <button class="locate-btn" onclick="locateFastest()">Locate fastest vehicle</button>
+        </div>
+        <div class="cause-row">
+          <div class="name">2. Intersection / merging traffic</div>
+          <div class="desc">10 merging + 5 crossing vehicles, real NH16 junctions.</div>
+          <button class="locate-btn" onclick="locateGroup('merge')">Locate merge</button>
+          <button class="locate-btn" onclick="locateGroup('crossing')">Locate crossing</button>
+        </div>
+        <div class="cause-row">
+          <div class="name">3. Two-wheelers</div>
+          <div class="desc">23 motorcycles in the fleet, most at-risk vehicle type per the accident analysis.</div>
+          <button class="locate-btn" onclick="locateType('motorcycle')">Locate a motorcycle</button>
+        </div>
+        <div class="cause-row">
+          <div class="name">4. Road classification</div>
+          <div class="desc">Not a vehicle &mdash; reflected in the real NH16 network itself (Phase 1), which has genuine mixed lane counts along its length. Phase 4's alert thresholds will vary by this.</div>
+        </div>
+        <div class="cause-row">
+          <div class="name">5. Wrong-side driving</div>
+          <div class="desc">4 vehicles routed onto the oncoming carriageway &mdash; the #1 real cause of fatalities on this highway.</div>
+          <button class="locate-btn" onclick="locateGroup('wrongway')">Locate wrong-way</button>
+        </div>
+      </div>
+      <div class="panel">
         <h3>Live stats</h3>
         <div class="stat-grid">
           <div class="stat-box"><div class="n" id="statActive">0</div><div class="l">Active now</div></div>
@@ -435,6 +463,64 @@ function showFrame(idx) {
     document.getElementById("clock").textContent = "T = " + frame.time + "s";
     document.getElementById("timeLabel").textContent = "t = " + frame.time + "s";
     document.getElementById("slider").value = idx;
+}
+
+// --- "jump to a live example" locators for the 5 accident causes ---
+var highlightRing = document.createElementNS(svgNS, "circle");
+highlightRing.setAttribute("r", "16");
+highlightRing.setAttribute("fill", "none");
+highlightRing.setAttribute("stroke", "#ffffff");
+highlightRing.setAttribute("stroke-width", "3");
+highlightRing.style.display = "none";
+vehLayer.parentNode.appendChild(highlightRing);
+
+function scrollToXY(x) {
+    var wrap = document.getElementById("canvasWrap");
+    wrap.scrollTo({ left: Math.max(0, x - wrap.clientWidth / 2), behavior: "smooth" });
+}
+
+function flashAt(x, y) {
+    highlightRing.setAttribute("cx", x);
+    highlightRing.setAttribute("cy", y);
+    highlightRing.style.display = "";
+    highlightRing.style.opacity = "1";
+    setTimeout(function() {
+        highlightRing.style.transition = "opacity 1s";
+        highlightRing.style.opacity = "0";
+    }, 1800);
+}
+
+function jumpToVehicle(frameIdx, v) {
+    currentIdx = frameIdx;
+    showFrame(frameIdx);
+    scrollToXY(v.x);
+    flashAt(v.x, v.y);
+}
+
+function locateGroup(group) {
+    for (var i = 0; i < frames.length; i++) {
+        var v = frames[i].vehicles.find(function(v) { return v.group === group; });
+        if (v) { jumpToVehicle(i, v); return; }
+    }
+    alert("No active " + group + " vehicle found in the sampled frames — try scrubbing the time slider manually.");
+}
+
+function locateType(vtype) {
+    for (var i = 0; i < frames.length; i++) {
+        var v = frames[i].vehicles.find(function(v) { return v.type === vtype; });
+        if (v) { jumpToVehicle(i, v); return; }
+    }
+    alert("No active " + vtype + " found in the sampled frames.");
+}
+
+function locateFastest() {
+    var best = null, bestIdx = -1;
+    for (var i = 0; i < frames.length; i++) {
+        frames[i].vehicles.forEach(function(v) {
+            if (!best || v.speed > best.speed) { best = v; bestIdx = i; }
+        });
+    }
+    if (best) jumpToVehicle(bestIdx, best);
 }
 
 var currentIdx = 0, playing = false, playTimer = null;
