@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
-"""Phase 2 output: a self-contained, presentation-style animated dashboard —
-matching the style of the other VANET project's schematic GUI (dark theme,
-stylized road path, live stats, per-vehicle speed list, legend, play/reset/
-speed controls) instead of a real map-tile view.
+"""Phase 2 output: a presentation-style animated dashboard covering the
+FULL NH16 corridor at a fixed, readable scale — the canvas is wide (scrolls
+left/right, not squeezed to fit one screen), so vehicles are always a clear,
+comfortably-sized dot with no zooming needed.
 
-No external tiles or CDN map dependency at all (fixes the CartoDB-API-key
-issue and the "shows half of Andhra Pradesh" problem in one move) — the road
-is drawn as an inline SVG schematic, projected from the real NH16 geometry
-so its bends still reflect the actual route, just abstracted like a metro
-map rather than literal satellite/street imagery.
+Side roads at merge/crossing junctions are drawn as real, visible stub
+branches (not just a marker dot) — a merging vehicle visibly travels down
+its stub before joining the highway; a crossing vehicle visibly travels
+straight through, from one side of the highway to the other.
+
+No external map tiles/CDN dependency — inline SVG only, fully offline.
 
 Requires:
 - road/nh16.net.xml       (Phase 1)
 - sim/sumo/routes.rou.xml (Phase 2, generate_vehicles.py)
 - output/phase2_fcd.xml   (Phase 2, scripts/run_phase2_preview.sh,
-                            --fcd-output.geo true)
+                            --fcd-output.geo true, default lane/pos fields)
 """
 import json
 import math
@@ -46,11 +47,14 @@ GROUP_LABELS = {
     "wrongway": "Wrong-way",
 }
 
-# schematic canvas geometry
-SVG_W, SVG_H = 1400, 420
-MARGIN_X = 90
-ROAD_Y = 220
-BEND_SCALE = 2200  # exaggerates real lateral bends so the schematic isn't a flat line
+# Canvas is sized to the REAL route length at a fixed scale, not squeezed to
+# fit the viewport — the container scrolls instead.
+PIXELS_PER_KM = 70
+MARGIN_X = 100
+SVG_H = 560
+ROAD_Y = 280
+BEND_SCALE = 2200      # exaggerates real lateral highway bends for visibility
+STUB_LEN = 90           # fixed pixel length of a schematic side-road stub
 
 
 def is_nh16(edge):
@@ -80,19 +84,19 @@ def haversine_km(lat1, lon1, lat2, lon2):
     return 2 * r * math.asin(math.sqrt(a))
 
 
-def build_projector(net, nh16_edges):
-    """Projects real (lat, lon) onto the schematic canvas: x follows
-    position along the Srikakulam->Vizag axis, y follows perpendicular
-    deviation from that straight line (exaggerated) so real bends still
-    show, without needing real map tiles."""
+def build_projector(net, nh16_edges, svg_w):
+    """Projects real (lat, lon) onto the wide schematic canvas: x follows
+    position along the Srikakulam->Vizag axis (scaled to the fixed
+    pixels-per-km canvas width), y follows perpendicular deviation from that
+    straight line (exaggerated) so real highway bends still show."""
     pts = []
     for e in nh16_edges:
         for x, y in e.getShape():
             lon, lat = net.convertXY2LonLat(x, y)
             pts.append((lat, lon))
 
-    north = max(pts, key=lambda p: p[0])   # Srikakulam end
-    south = min(pts, key=lambda p: p[0])   # Visakhapatnam end
+    north = max(pts, key=lambda p: p[0])
+    south = min(pts, key=lambda p: p[0])
     dx, dy = south[1] - north[1], south[0] - north[0]
     length2 = dx * dx + dy * dy
     total_km = haversine_km(north[0], north[1], south[0], south[1])
@@ -103,7 +107,7 @@ def build_projector(net, nh16_edges):
         t = max(0.0, min(1.0, t))
         cross = vx * dy - vy * dx
         perp = cross / math.sqrt(length2)
-        px = MARGIN_X + t * (SVG_W - 2 * MARGIN_X)
+        px = MARGIN_X + t * (svg_w - 2 * MARGIN_X)
         py = ROAD_Y + perp * BEND_SCALE
         return px, py, t
 
@@ -113,13 +117,17 @@ def build_projector(net, nh16_edges):
 def main():
     net = sumolib.net.readNet(NET_FILE)
     nh16_edges = [e for e in net.getEdges() if is_nh16(e)]
+    nh16_ids = {e.getID() for e in nh16_edges}
     if not nh16_edges:
         raise SystemExit("No NH16 edges found — check road/nh16.net.xml")
 
-    project, total_km = build_projector(net, nh16_edges)
-    print(f"Route length (endpoint-to-endpoint): ~{total_km:.1f} km")
+    # first pass just to get total_km, so we can size the canvas
+    _tmp_project, total_km = build_projector(net, nh16_edges, svg_w=2000)
+    svg_w = max(2400, int(total_km * PIXELS_PER_KM) + 2 * MARGIN_X)
+    project, total_km = build_projector(net, nh16_edges, svg_w=svg_w)
+    print(f"Route length: ~{total_km:.1f} km -> canvas width {svg_w}px")
 
-    # --- schematic road path (drawn once, static) ---
+    # --- static highway path ---
     road_points = []
     for e in nh16_edges:
         for x, y in e.getShape():
@@ -127,31 +135,70 @@ def main():
             px, py, t = project(lat, lon)
             road_points.append((t, px, py))
     road_points.sort(key=lambda p: p[0])
-    road_path_xy = [[px, py] for _, px, py in road_points]
+    road_d = "M " + " L ".join(f"{px:.1f},{py:.1f}" for _, px, py in road_points)
 
-    # --- junction markers: the real junctions our merge/crossing vehicles use ---
+    # --- identify each merge/crossing vehicle's side-road edge(s) and build
+    #     a fixed-length schematic stub for each junction actually used ---
     tree = ET.parse(ROUTES_FILE)
     root = tree.getroot()
+
+    # junction_id -> {"group", "x", "y", "km", "stubs": {edge_id: (outer_xy, inner_xy, length)}}
     junctions = {}
+    alternate = 0
     for veh in root.findall("vehicle"):
         vid = veh.get("id")
         group = group_from_id(vid)
         if group not in ("merge", "crossing"):
             continue
-        first_edge_id = veh.find("route").get("edges").split()[0]
-        edge = net.getEdge(first_edge_id)
-        node = edge.getToNode()
-        if node.getID() in junctions:
+        edges = veh.find("route").get("edges").split()
+        side_edges = [eid for eid in edges if eid not in nh16_ids]
+        if not side_edges:
             continue
-        x, y = node.getCoord()
-        lon, lat = net.convertXY2LonLat(x, y)
-        px, py, t = project(lat, lon)
-        junctions[node.getID()] = {
-            "x": px, "y": py, "km": round(t * total_km, 1), "group": group,
-        }
-    print(f"Junction markers: {len(junctions)}")
+        # the junction is the node shared between the side road and the highway
+        junction_node = None
+        for eid in side_edges:
+            e = net.getEdge(eid)
+            for node in (e.getFromNode(), e.getToNode()):
+                node_edges = list(node.getIncoming()) + list(node.getOutgoing())
+                if any(ne.getID() in nh16_ids for ne in node_edges):
+                    junction_node = node
+                    break
+            if junction_node:
+                break
+        if junction_node is None:
+            continue
 
-    # --- FCD frames ---
+        jid = junction_node.getID()
+        jx, jy = net.convertXY2LonLat(*junction_node.getCoord())
+        jpx, jpy, jt = project(jy, jx)
+
+        if jid not in junctions:
+            side = -1 if alternate % 2 == 0 else 1   # alternate stub direction, above/below
+            alternate += 1
+            junctions[jid] = {
+                "group": group, "x": jpx, "y": jpy,
+                "km": round(jt * total_km, 1), "side": side, "stubs": {},
+            }
+
+        j = junctions[jid]
+        for eid in side_edges:
+            e = net.getEdge(eid)
+            length = e.getLength()
+            if e.getToNode().getID() == jid:      # incoming: outer -> junction
+                outer = (jpx - STUB_LEN * 0.7, jpy + j["side"] * STUB_LEN)
+                j["stubs"][eid] = {"a": outer, "b": (jpx, jpy), "len": length}
+            else:                                  # outgoing: junction -> outer
+                outer = (jpx + STUB_LEN * 0.7, jpy + j["side"] * STUB_LEN)
+                j["stubs"][eid] = {"a": (jpx, jpy), "b": outer, "len": length}
+
+    print(f"Junction markers: {len(junctions)}")
+    stub_edge_lookup = {}  # edge_id -> (junction_id, a_xy, b_xy, length)
+    for jid, j in junctions.items():
+        for eid, s in j["stubs"].items():
+            stub_edge_lookup[eid] = (jid, s["a"], s["b"], s["len"])
+
+    # --- FCD frames: main-road vehicles use the real projector; vehicles on
+    #     a stub edge are interpolated along that stub instead ---
     frames = []
     context = ET.iterparse(FCD_FILE, events=("end",))
     for _, elem in context:
@@ -163,12 +210,24 @@ def main():
             continue
         vehicles = []
         for v in elem.findall("vehicle"):
-            lon, lat = float(v.get("x")), float(v.get("y"))
-            px, py, _ = project(lat, lon)
             vid = v.get("id")
+            lane = v.get("lane", "")
+            edge_id = lane.rsplit("_", 1)[0] if lane else ""
+            speed_kmh = round(float(v.get("speed")) * 3.6, 1)
+
+            if edge_id in stub_edge_lookup:
+                _jid, a, b, length = stub_edge_lookup[edge_id]
+                pos = float(v.get("pos", 0.0))
+                f = max(0.0, min(1.0, pos / length)) if length > 0 else 0.0
+                px = a[0] + f * (b[0] - a[0])
+                py = a[1] + f * (b[1] - a[1])
+            else:
+                lon, lat = float(v.get("x")), float(v.get("y"))
+                px, py, _ = project(lat, lon)
+
             vehicles.append({
                 "id": vid, "type": v.get("type"), "group": group_from_id(vid),
-                "x": px, "y": py, "speed": round(float(v.get("speed")) * 3.6, 1),  # -> km/h
+                "x": px, "y": py, "speed": speed_kmh,
             })
         frames.append({"time": t, "vehicles": vehicles})
         elem.clear()
@@ -184,7 +243,20 @@ def main():
         g = group_from_id(v.get("id"))
         group_counts[g] = group_counts.get(g, 0) + 1
 
-    road_d = "M " + " L ".join(f"{x:.1f},{y:.1f}" for x, y in road_path_xy)
+    # --- stub SVG paths (drawn once, static, behind the vehicles) ---
+    stub_svg = ""
+    for jid, j in junctions.items():
+        color = GROUP_COLORS[j["group"]]
+        for eid, s in j["stubs"].items():
+            stub_svg += (f'<line x1="{s["a"][0]:.1f}" y1="{s["a"][1]:.1f}" '
+                         f'x2="{s["b"][0]:.1f}" y2="{s["b"][1]:.1f}" '
+                         f'stroke="{color}" stroke-width="6" stroke-linecap="round" '
+                         f'opacity="0.55"/>\n')
+        stub_svg += (f'<rect x="{j["x"]-5}" y="{j["y"]-5}" width="10" height="10" '
+                     f'fill="{color}" stroke="#0f1620" stroke-width="1.5"/>\n'
+                     f'<text class="junction-label" x="{j["x"]+9}" '
+                     f'y="{j["y"] + (22 if j["side"] > 0 else -14)}">'
+                     f'~{j["km"]}km &middot; {GROUP_LABELS[j["group"]]}</text>\n')
 
     html = f"""<!doctype html>
 <html>
@@ -198,18 +270,21 @@ def main():
   #layout {{ display: flex; flex-direction: column; height: 100%; }}
   #header {{
     padding: 14px 20px; background: #131c28; border-bottom: 1px solid #22303f;
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
   }}
   #header h1 {{ font-size: 17px; margin: 0; }}
   #header .sub {{ font-size: 12px; color: #8fa3b8; margin-top: 2px; }}
   #clock {{ font-size: 22px; color: #4fc3f7; font-variant-numeric: tabular-nums; }}
   #body {{ flex: 1; display: flex; overflow: hidden; }}
-  #canvasWrap {{ flex: 1; position: relative; }}
-  svg {{ width: 100%; height: 100%; }}
-  .junction-label {{ fill: #8fa3b8; font-size: 11px; }}
+  #canvasWrap {{
+    flex: 1; overflow: auto; position: relative; background: #0f1620;
+  }}
+  #canvasWrap svg {{ display: block; }}
+  .junction-label {{ fill: #c7d3de; font-size: 12px; font-weight: 500; }}
+  .end-label {{ fill: #8fa3b8; font-size: 14px; font-weight: 600; }}
   #sidebar {{
-    width: 260px; background: #131c28; border-left: 1px solid #22303f;
-    padding: 14px; overflow-y: auto; font-size: 13px;
+    width: 270px; background: #131c28; border-left: 1px solid #22303f;
+    padding: 14px; overflow-y: auto; font-size: 13px; flex-shrink: 0;
   }}
   .panel {{ margin-bottom: 18px; }}
   .panel h3 {{ font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
@@ -226,9 +301,11 @@ def main():
   .speed-row .kmh {{ width: 44px; text-align: right; color: #8fa3b8; }}
   .legend-row {{ display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 12px; }}
   .legend-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
+  .legend-line {{ width: 16px; height: 3px; }}
+  #hint {{ font-size: 11px; color: #6b7f92; margin-top: 4px; }}
   #controls {{
     height: 60px; background: #131c28; border-top: 1px solid #22303f;
-    display: flex; align-items: center; gap: 14px; padding: 0 20px;
+    display: flex; align-items: center; gap: 14px; padding: 0 20px; flex-shrink: 0;
   }}
   button {{ cursor: pointer; padding: 7px 18px; border-radius: 5px; border: none;
             background: #3f7cb0; color: white; font-size: 13px; }}
@@ -242,26 +319,18 @@ def main():
   <div id="header">
     <div>
       <h1>NH16 Collision-Warning — Vehicle Preview (Phase 2)</h1>
-      <div class="sub">{sum(group_counts.values())} vehicles &middot; pure V2V (no RSU) &middot; 802.11p OCB mode &middot; ~{total_km:.0f} km corridor</div>
+      <div class="sub">{sum(group_counts.values())} vehicles &middot; pure V2V (no RSU) &middot; 802.11p OCB mode &middot; ~{total_km:.0f} km corridor &mdash; scroll the map left/right to see the full route</div>
     </div>
     <div id="clock">T = 0s</div>
   </div>
   <div id="body">
     <div id="canvasWrap">
-      <svg viewBox="0 0 {SVG_W} {SVG_H}">
-        <path d="{road_d}" stroke="#3a4a5c" stroke-width="10" fill="none" stroke-linecap="round"/>
-        <path d="{road_d}" stroke="#c9a227" stroke-width="1.5" stroke-dasharray="10 10" fill="none" opacity="0.6"/>
-        <text x="{MARGIN_X}" y="{SVG_H - 18}" fill="#8fa3b8" font-size="12">&#9664; Srikakulam</text>
-        <text x="{SVG_W - MARGIN_X}" y="{SVG_H - 18}" fill="#8fa3b8" font-size="12" text-anchor="end">Visakhapatnam &#9654;</text>
-        <g id="junctions">
-"""
-    for jid, j in junctions.items():
-        color = GROUP_COLORS[j["group"]]
-        html += (f'          <rect x="{j["x"]-4}" y="{j["y"]-4}" width="8" height="8" '
-                 f'fill="{color}" stroke="#0f1620" stroke-width="1"/>\n'
-                 f'          <text class="junction-label" x="{j["x"]+7}" y="{j["y"]-8}">'
-                 f'~{j["km"]}km</text>\n')
-    html += """        </g>
+      <svg width="{svg_w}" height="{SVG_H}" viewBox="0 0 {svg_w} {SVG_H}">
+        <path d="{road_d}" stroke="#3a4a5c" stroke-width="14" fill="none" stroke-linecap="round"/>
+        <path d="{road_d}" stroke="#c9a227" stroke-width="2" stroke-dasharray="12 12" fill="none" opacity="0.6"/>
+        {stub_svg}
+        <text class="end-label" x="{MARGIN_X}" y="{SVG_H - 20}">&#9664; Srikakulam</text>
+        <text class="end-label" x="{svg_w - MARGIN_X}" y="{SVG_H - 20}" text-anchor="end">Visakhapatnam &#9654;</text>
         <g id="vehicles"></g>
       </svg>
     </div>
@@ -286,44 +355,46 @@ def main():
         html += (f'        <div class="legend-row"><span class="legend-dot" '
                  f'style="background:{color}"></span>{GROUP_LABELS[g]} '
                  f'({group_counts.get(g, 0)})</div>\n')
-    html += f"""      </div>
+    html += """        <div class="legend-row"><span class="legend-line" style="background:#8fa3b8;opacity:0.55"></span>Side-road stub</div>
+        <div id="hint">Vehicles on a stub are traveling the side road, before joining or crossing the highway.</div>
+      </div>
     </div>
   </div>
   <div id="controls">
     <button id="playBtn">Play</button>
     <button class="secondary" id="resetBtn">Reset</button>
-    <input type="range" id="slider" min="0" max="{len(frames) - 1}" value="0" />
+    <input type="range" id="slider" min="0" max=\"""" + str(len(frames) - 1) + """\" value="0" />
     <span id="timeLabel">t = 0s</span>
   </div>
 </div>
 <script>
-var frames = {json.dumps(frames)};
-var groupColors = {json.dumps(GROUP_COLORS)};
+var frames = """ + json.dumps(frames) + """;
+var groupColors = """ + json.dumps(GROUP_COLORS) + """;
 
 var svgNS = "http://www.w3.org/2000/svg";
 var vehLayer = document.getElementById("vehicles");
-var shapes = {{}};  // id -> <circle>
+var shapes = {};
 
-function speedColor(kmh) {{
+function speedColor(kmh) {
     if (kmh > 60) return "#4caf50";
     if (kmh > 20) return "#f2a900";
     return "#e6392b";
-}}
+}
 
-function showFrame(idx) {{
+function showFrame(idx) {
     var frame = frames[idx];
-    var seen = {{}};
+    var seen = {};
     var speedListHtml = "";
-    frame.vehicles.slice().sort(function(a, b) {{ return a.speed - b.speed; }}).forEach(function(v) {{
+    frame.vehicles.slice().sort(function(a, b) { return a.speed - b.speed; }).forEach(function(v) {
         seen[v.id] = true;
-        if (!shapes[v.id]) {{
+        if (!shapes[v.id]) {
             var c = document.createElementNS(svgNS, "circle");
-            c.setAttribute("r", "5");
+            c.setAttribute("r", "7");
             c.setAttribute("stroke", "#0f1620");
-            c.setAttribute("stroke-width", "1");
+            c.setAttribute("stroke-width", "1.5");
             vehLayer.appendChild(c);
             shapes[v.id] = c;
-        }}
+        }
         var c = shapes[v.id];
         c.setAttribute("cx", v.x);
         c.setAttribute("cy", v.y);
@@ -337,43 +408,43 @@ function showFrame(idx) {{
             '<span class="bar-bg"><span class="bar" style="width:' + pct + '%;background:' + speedColor(v.speed) + '"></span></span>' +
             '<span class="kmh">' + v.speed + '</span>' +
         '</div>';
-    }});
-    Object.keys(shapes).forEach(function(id) {{
+    });
+    Object.keys(shapes).forEach(function(id) {
         if (!seen[id]) shapes[id].style.display = "none";
-    }});
+    });
     document.getElementById("speedList").innerHTML = speedListHtml || '<div style="color:#8fa3b8">No vehicles active</div>';
     document.getElementById("statActive").textContent = frame.vehicles.length;
     document.getElementById("clock").textContent = "T = " + frame.time + "s";
     document.getElementById("timeLabel").textContent = "t = " + frame.time + "s";
     document.getElementById("slider").value = idx;
-}}
+}
 
 var currentIdx = 0, playing = false, playTimer = null;
 
-function step() {{
+function step() {
     currentIdx = (currentIdx + 1) % frames.length;
     showFrame(currentIdx);
-}}
+}
 
-document.getElementById("slider").addEventListener("input", function(e) {{
+document.getElementById("slider").addEventListener("input", function(e) {
     currentIdx = parseInt(e.target.value, 10);
     showFrame(currentIdx);
-}});
+});
 
-document.getElementById("playBtn").addEventListener("click", function() {{
+document.getElementById("playBtn").addEventListener("click", function() {
     playing = !playing;
     this.textContent = playing ? "Pause" : "Play";
-    if (playing) {{ playTimer = setInterval(step, 200); }}
-    else {{ clearInterval(playTimer); }}
-}});
+    if (playing) { playTimer = setInterval(step, 200); }
+    else { clearInterval(playTimer); }
+});
 
-document.getElementById("resetBtn").addEventListener("click", function() {{
+document.getElementById("resetBtn").addEventListener("click", function() {
     playing = false;
     clearInterval(playTimer);
     document.getElementById("playBtn").textContent = "Play";
     currentIdx = 0;
     showFrame(0);
-}});
+});
 
 showFrame(0);
 </script>
